@@ -1,0 +1,13 @@
+{
+  "name": "den-ban-focus-guard",
+  "version": "1.8.0",
+  "private": true,
+  "description": "Đèn Bàn: góc học tập, bộ đếm tập trung và trợ lý camera cục bộ",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.cjs",
+    "test": "node --test tests/*.cjs"
+  }
+}

@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="vi">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#355847">
+  <meta name="description" content="Góc học tập tiếng Việt, bộ đếm tập trung và trợ lý camera cục bộ.">
+  <title>Đèn Bàn · Một chút tập trung, mỗi ngày</title>
+  <link rel="icon" href="./favicon.svg">
+  <link rel="stylesheet" href="./style.css">
+  <script>
+    (() => {
+      try {
+        const s = JSON.parse(localStorage.getItem('denban.settings') || '{}');
+        const theme = s.theme || 'system';
+        const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        if (isDark) {
+          const meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', '#141916');
+        }
+      } catch (_) {}
+    })();
+  </script>
+  <script src="./browser-ai.js" defer></script>
+  <script src="./browser-pip.js" defer></script>
+  <script src="./records.js" defer></script>
+  <script src="./alert-core.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="#study">
+      <span class="brand-icon" data-icon="lamp"></span>
+      <span>đèn bàn<small>GÓC HỌC CỦA BẠN</small></span>
+    </a>
+
+    <div class="nav-label">KHÔNG GIAN</div>
+
+    <nav aria-label="Điều hướng">
+      <button class="nav-item active" data-view="study" aria-label="Phiên tập trung">
+        <span data-icon="grid"></span>
+        <span>Phiên tập trung</span>
+        <i></i>
+      </button>
+      <button class="nav-item" data-view="history" aria-label="Lịch sử học tập">
+        <span data-icon="history"></span>
+        <span>Lịch sử học tập</span>
+      </button>
+      <button class="nav-item" data-view="settings" aria-label="Cài đặt">
+        <span data-icon="settings"></span>
+        <span>Cài đặt</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-note">
+      <span>✳</span>
+      <p>Việc lớn bắt đầu từ<br><em>một chút tập trung.</em></p>
+      <small>Từng phút đều có ý nghĩa.</small>
+    </div>
+
+    <div class="local-note">
+      <span data-icon="shield"></span>
+      <div>Không gian riêng tư<small>Không lưu ảnh camera</small></div>
+    </div>
+  </aside>
+
+  <div class="page">
+    <header class="topbar">
+      <div>Không gian của bạn <span>/</span> <b id="pageName">Phiên tập trung</b></div>
+      <div class="header-right">
+        <button id="themeToggle" class="theme-toggle" type="button" aria-label="Chuyển sang giao diện tối" title="Chuyển sang giao diện tối">
+          <span id="themeToggleIcon" data-icon="moon"></span>
+        </button>
+        <span id="today"></span>
+        <span class="avatar">B</span>
+      </div>
+    </header>
+
+    <main>
+      <section id="studyView" class="view">
+        <div class="hero">
+          <div>
+            <div class="eyebrow">● CHẬM LẠI MỘT CHÚT, TIẾN XA HƠN MỘT CHÚT</div>
+            <h1>Đến giờ tập trung rồi.</h1>
+            <p>Đặt mọi xao nhãng xuống. Dành khoảng thời gian này cho bạn.</p>
+          </div>
+          <span class="hero-mark" aria-hidden="true">✳</span>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card">
+            <div class="stat-top"><span>Thời gian học</span><span data-icon="clock"></span></div>
+            <strong id="sessionTime">00:00</strong>
+            <small>Chỉ tính thời gian đang học</small>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-top"><span>Tỉ lệ tập trung</span><span data-icon="chart"></span></div>
+            <strong id="focusPct">—</strong>
+            <small id="metricSource">Dựa trên việc ở lại tab học</small>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-top"><span>Chuỗi tập trung</span><span data-icon="spark"></span></div>
+            <strong id="focusStreak">00:00</strong>
+            <small>Giữ nhịp, từng phút một</small>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-top"><span>Lần xao nhãng</span><span data-icon="leaf"></span></div>
+            <strong id="distractCount">0</strong>
+            <small><span id="tabSwitchCount">0</span> lần rời tab học</small>
+          </article>
+        </div>
+
+        <div class="workspace-grid">
+          <article class="card camera-card">
+            <div class="card-heading">
+              <div>
+                <h2><span data-icon="camera"></span>Theo dõi khuôn mặt</h2>
+                <p>Theo dõi hướng đầu, mắt và nhận diện điện thoại khi nhìn thẳng hoặc cúi xuống.</p>
+              </div>
+              <span class="badge" id="cameraBadge"><i></i><span>Đang tải AI…</span></span>
+            </div>
+
+            <div class="camera-screen" id="cameraScreen">
+              <video id="feed" autoplay muted playsinline aria-label="Hình ảnh camera của bạn"></video>
+
+              <div class="camera-placeholder" id="cameraPlaceholder">
+                <svg class="desk-art" viewBox="0 0 560 270" fill="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="glow" x1="274" y1="88" x2="274" y2="230" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#ead7a3" stop-opacity=".5" />
+                      <stop offset="1" stop-color="#ead7a3" stop-opacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="287" cy="128" r="105" fill="#e9edde" />
+                  <path d="M269 91 191 234h158L306 91" fill="url(#glow)" />
+                  <path d="M120 226h332" stroke="#b5c3ac" stroke-width="2" stroke-linecap="round" />
+                  <path d="M344 211v-67l-44-60" stroke="#64806b" stroke-width="8" stroke-linecap="round" />
+                  <path d="m267 69 29-16 37 39h-73l7-23Z" fill="#64806b" />
+                  <ellipse cx="343" cy="219" rx="30" ry="7" fill="#64806b" />
+                  <path d="M203 199h80v18h-80z" fill="#d1ba8b" />
+                  <path d="M213 184h79v15h-79z" fill="#8ca48a" />
+                  <path d="M220 202h56m-45-13h54" stroke="#f8f5e9" stroke-width="3" />
+                  <path d="M158 194h30l-4 29h-22l-4-29Z" fill="#d7bd95" />
+                  <path d="M173 194v-47m0 27c-21 0-22-19-22-19 19-3 22 19 22 19Zm0-8s-2-26 18-28c5 20-18 28-18 28Z" stroke="#809777" stroke-width="3" fill="#9eb092" />
+                  <circle cx="390" cy="81" r="3" fill="#acbb99" />
+                  <path d="M184 91h12m-6-6v12m204 60h10m-5-5v10" stroke="#acbb99" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <h3>Góc học đã sẵn sàng.</h3>
+                <p id="cameraHint">AI tự bật khi mở trang. Cho phép camera rồi nhìn thẳng khoảng 4 giây để hiệu chỉnh.</p>
+                <button class="button camera-enable" id="enableCamera"><span data-icon="camera"></span>Bật camera</button>
+              </div>
+
+              <div class="live-label" id="liveLabel" hidden><i></i>CAMERA CỦA BẠN</div>
+              <div class="camera-caption" id="cameraCaption" hidden></div>
+            </div>
+
+            <div class="tracking-readout">
+              <span>Khuôn mặt <strong id="faceState">Chưa bật</strong></span>
+              <span>Hướng đầu <strong id="headDirection">—</strong></span>
+              <span>Góc ngang <strong id="yawValue">—</strong></span>
+              <button class="text-button" id="recalibrateBtn" disabled>Hiệu chỉnh lại</button>
+            </div>
+
+            <div class="activity-readout">
+              <span>Nhận diện hoạt động</span>
+              <strong id="activityState" role="status" data-state="unknown">Chưa đánh giá</strong>
+              <small>Đặt camera thấy cả mặt và điện thoại, kể cả khi giơ ngang mặt. Sách cần nằm trong khung hình; giấy viết hoặc vật bị che có thể chưa phân biệt được.</small>
+            </div>
+
+            <label class="tracking-choice">
+              <input id="faceMode" type="checkbox" checked> Theo dõi khuôn mặt trong phiên học
+            </label>
+
+            <div class="study-preferences">
+              <label for="studyMode">Cách học</label>
+              <select id="studyMode">
+                <option value="writing">Học có viết bài / đọc sách</option>
+                <option value="screen">Chỉ nhìn màn hình</option>
+              </select>
+              <button class="button" id="testSound">Bật / thử tiếng nhắc</button>
+              <small id="audioState">Bấm để kiểm tra tiếng nhắc.</small>
+            </div>
+
+            <div class="pip-controls">
+              <div class="pip-options">
+                <button class="button secondary" id="pipButton" type="button" disabled aria-describedby="pipStatus">Mở cửa sổ nổi</button>
+                <label for="autoPipToggle">
+                  <input class="switch" id="autoPipToggle" type="checkbox" checked aria-describedby="pipStatus">Tự mở PiP khi chuyển tab
+                </label>
+              </div>
+              <small id="pipStatus" role="status">Bật camera để xem trạng thái và thời gian trong cửa sổ nổi.</small>
+            </div>
+
+            <div class="status-strip">
+              <span class="status-dot" id="statusDot"></span>
+              <div>
+                <strong id="statusText">Sẵn sàng khi bạn sẵn sàng.</strong>
+                <small id="statusDetail">Chọn thời lượng và bắt đầu phiên học đầu tiên.</small>
+              </div>
+              <span class="mode-label" id="aiLabel">THEO DÕI TAB</span>
+            </div>
+
+            <div class="camera-footer">
+              <span data-icon="shield"></span>
+              <p>AI xử lý ngay trong trình duyệt. Không tải ảnh lên máy chủ.</p>
+              <button class="text-button" id="disableCamera" hidden>Tắt camera</button>
+            </div>
+          </article>
+
+          <aside class="right-rail">
+            <article class="card timer-card">
+              <div class="card-heading">
+                <h2>Khoảng thời gian của bạn</h2>
+                <span data-icon="clock"></span>
+              </div>
+
+              <div class="timer-ring" id="timerRing">
+                <div>
+                  <span class="timer-kicker">PHIÊN TẬP TRUNG</span>
+                  <strong id="countdown">25:00</strong>
+                  <span id="timerSubtitle">Chưa bắt đầu</span>
+                </div>
+              </div>
+
+              <div class="duration-options" role="group" aria-label="Thời lượng học">
+                <button class="selected" data-minutes="25" aria-pressed="true">25 phút</button>
+                <button data-minutes="45" aria-pressed="false">45 phút</button>
+                <button data-minutes="60" aria-pressed="false">60 phút</button>
+              </div>
+
+              <button class="button primary start-button" id="startBtn">
+                <span data-icon="play"></span>
+                <span id="startText">Bắt đầu tập trung</span>
+              </button>
+
+              <div class="session-actions" id="sessionActions" hidden>
+                <button class="button secondary" id="pauseBtn">Tạm dừng</button>
+                <button class="text-button" id="finishBtn">Kết thúc phiên</button>
+              </div>
+
+              <div class="record-actions">
+                <button class="button secondary" id="saveSessionBtn" disabled>Lưu phiên</button>
+                <button class="text-button" id="resetSessionBtn" disabled>Đặt lại</button>
+              </div>
+
+              <p class="timer-note"><span data-icon="spark"></span>Mỗi phiên là một bước tiến nhỏ.</p>
+            </article>
+
+            <article class="card tasks-card">
+              <div class="card-heading">
+                <h2>Hôm nay mình sẽ…</h2>
+                <span class="task-count" id="taskCount">0/0</span>
+              </div>
+
+              <form id="taskForm">
+                <label class="sr-only" for="taskInput">Thêm mục tiêu học tập</label>
+                <input id="taskInput" placeholder="Thêm một mục tiêu nhỏ" maxlength="100" autocomplete="off">
+                <button type="submit" aria-label="Thêm mục tiêu">+</button>
+              </form>
+
+              <ul id="taskList" class="task-list"></ul>
+              <p class="tasks-note">Ít thôi cũng được. Hoàn thành là tốt rồi.</p>
+            </article>
+          </aside>
+        </div>
+
+        <article class="card journal-card">
+          <div class="card-heading">
+            <div>
+              <h2><span data-icon="history"></span>Nhật ký phiên học</h2>
+              <p>Những lần quay lại cũng là một phần của tiến bộ.</p>
+            </div>
+            <button class="text-button" id="exportBtn" disabled><span data-icon="download"></span>Xuất nhật ký</button>
+          </div>
+          <ul id="logList" class="log-list">
+            <li class="log-empty">Chưa có hoạt động. Bắt đầu và tạo nhịp học của riêng bạn.</li>
+          </ul>
+        </article>
+      </section>
+
+      <section id="historyView" class="view" hidden>
+        <div class="hero">
+          <div>
+            <div class="eyebrow">TỪNG PHÚT ĐỀU CÓ Ý NGHĨA</div>
+            <h1>Nhìn lại những bước tiến.</h1>
+            <p>Kỷ lục, phiên đã lưu và lý do xao nhãng trong trình duyệt này.</p>
+          </div>
+        </div>
+
+        <div class="records-summary" id="recordsSummary"></div>
+
+        <article class="card records-reasons">
+          <div class="card-heading"><h2>Lý do xao nhãng thường gặp</h2></div>
+          <ul class="log-list" id="topReasons"></ul>
+        </article>
+
+        <div class="backup-actions">
+          <button class="button secondary" id="backupBtn">Xuất bản sao lưu</button>
+          <button class="button secondary" id="importBtn">Nhập bản sao lưu</button>
+          <input type="file" id="importFile" accept=".json,application/json" hidden>
+          <small>Lưu trên trình duyệt và địa chỉ hiện tại. Xuất bản sao lưu trước khi đổi máy hoặc xóa dữ liệu trình duyệt.</small>
+        </div>
+
+        <article class="card history-card">
+          <div class="card-heading">
+            <h2>Lịch sử học tập</h2>
+            <button class="text-button" id="clearHistory">Xóa lịch sử</button>
+          </div>
+          <div id="historyList"></div>
+        </article>
+
+        <article class="card session-detail" id="sessionDetail" hidden>
+          <div class="card-heading">
+            <h2 id="detailTitle">Chi tiết phiên</h2>
+            <button class="text-button" id="closeDetail">Đóng</button>
+          </div>
+          <p id="detailSummary"></p>
+          <ul class="log-list" id="detailEvents"></ul>
+        </article>
+      </section>
+
+      <section id="settingsView" class="view" hidden>
+        <div class="hero">
+          <div>
+            <div class="eyebrow">NHỊP HỌC CỦA RIÊNG BẠN</div>
+            <h1>Thoải mái để tập trung.</h1>
+            <p>Điều chỉnh những lời nhắc theo cách bạn muốn.</p>
+          </div>
+        </div>
+
+        <article class="card settings-card">
+          <div class="setting">
+            <div>
+              <label for="themeSelect">Giao diện (Dark mode)</label>
+              <p>Chọn giao diện sáng tự nhiên hoặc tối dịu mắt để bảo vệ mắt khi học ban đêm.</p>
+            </div>
+            <select id="themeSelect">
+              <option value="system">Theo hệ thống</option>
+              <option value="light">Giao diện sáng</option>
+              <option value="dark">Giao diện tối</option>
+            </select>
+          </div>
+
+          <div class="setting">
+            <div>
+              <label for="keepAwakeToggle">Chống ngủ đông khi rời tab &amp; Giữ màn hình sáng</label>
+              <p id="keepAwakeHelp">Giữ nhịp đếm giờ liên tục qua Web Worker, ngăn trình duyệt đóng băng tab khi chuyển sang ứng dụng khác và giữ màn hình luôn sáng khi đang học.</p>
+            </div>
+            <input id="keepAwakeToggle" class="switch" type="checkbox" checked aria-describedby="keepAwakeHelp">
+          </div>
+
+          <div class="setting">
+            <div>
+              <label for="soundToggle">Âm thanh nhắc nhở</label>
+              <p>Hai tiếng nhắc nổi bật khi xao nhãng, lặp sau 12 giây nếu chưa quay lại.</p>
+            </div>
+            <input id="soundToggle" class="switch" type="checkbox" checked>
+          </div>
+
+          <div class="setting volume-setting">
+            <div>
+              <label for="alertVolume">Âm lượng tiếng nhắc</label>
+              <p>Hai tiếng nhắc rõ và dài hơn. Bấm thử để chọn mức phù hợp.</p>
+            </div>
+            <div class="volume-controls">
+              <div class="volume-slider">
+                <input id="alertVolume" type="range" min="0" max="100" step="5" value="80">
+                <output id="alertVolumeValue" for="alertVolume">80%</output>
+              </div>
+              <button class="button secondary" id="settingsTestSound">Thử tiếng nhắc</button>
+            </div>
+          </div>
+
+          <div class="setting">
+            <div>
+              <label for="sensitivity">Độ nhạy chung (quy tắc nhắm mắt)</label>
+              <p id="sensitivityLabel">Vừa phải · nhắc sau 1,8 giây</p>
+            </div>
+            <select id="sensitivity">
+              <option value="1">Nhẹ nhàng</option>
+              <option value="2" selected>Vừa phải</option>
+              <option value="3">Nhạy hơn</option>
+            </select>
+          </div>
+
+          <div class="setting camera-sensitivity">
+            <div>
+              <label for="phoneSensitivity">Phát hiện điện thoại</label>
+              <p id="phoneSensitivityHelp"></p>
+            </div>
+            <select id="phoneSensitivity" aria-describedby="phoneSensitivityHelp">
+              <option value="1">Nhẹ nhàng</option>
+              <option value="2">Vừa phải</option>
+              <option value="3">Nhạy hơn</option>
+            </select>
+          </div>
+
+          <div class="setting">
+            <div>
+              <label for="calculatorFilterToggle">Tối ưu chống nhầm máy tính cầm tay</label>
+              <p>Tự động phân biệt máy tính cầm tay (Casio...) với điện thoại qua bàn phím số, vị trí trên bàn và học từ nút "Mình đang học".</p>
+            </div>
+            <input id="calculatorFilterToggle" class="switch" type="checkbox" checked>
+          </div>
+
+          <div class="setting camera-sensitivity">
+            <div>
+              <label for="turnSensitivity">Quay đầu/nhìn lệch</label>
+              <p id="turnSensitivityHelp"></p>
+            </div>
+            <select id="turnSensitivity" aria-describedby="turnSensitivityHelp">
+              <option value="1">Nhẹ nhàng</option>
+              <option value="2">Vừa phải</option>
+              <option value="3">Nhạy hơn</option>
+            </select>
+          </div>
+
+          <div class="setting camera-sensitivity">
+            <div>
+              <label for="nofaceSensitivity">Mất khuôn mặt</label>
+              <p id="nofaceSensitivityHelp"></p>
+            </div>
+            <select id="nofaceSensitivity" aria-describedby="nofaceSensitivityHelp">
+              <option value="1">Nhẹ nhàng</option>
+              <option value="2">Vừa phải</option>
+              <option value="3">Nhạy hơn</option>
+            </select>
+          </div>
+
+          <div class="setting">
+            <div>
+              <h3>Độ nhạy riêng</h3>
+              <p>Nhẹ nhàng: chờ tín hiệu lâu hơn. Vừa phải: cân bằng. Nhạy hơn: nhắc sớm hơn. Luôn cần nhiều mẫu AI. Phản hồi cảnh báo sai không đổi lựa chọn này.</p>
+            </div>
+            <button id="resetCameraSensitivity" class="button secondary">Khôi phục mặc định</button>
+          </div>
+
+          <div class="setting">
+            <div>
+              <h3>AI chạy ngay trong trình duyệt</h3>
+              <p id="aiStatus">Đang kiểm tra khả năng nhận diện…</p>
+            </div>
+            <span class="badge" id="aiStatusBadge">Đang kiểm tra</span>
+          </div>
+
+          <div class="setting">
+            <div>
+              <h3>Nhận diện điện thoại / sách</h3>
+              <p id="objectAiStatus">Đang tải AI nhận diện vật thể…</p>
+            </div>
+          </div>
+
+          <div class="info-note">
+            <span data-icon="shield"></span>
+            <p>Chế độ cơ bản có bộ đếm, mục tiêu và nhắc khi rời tab. AI và camera tự khởi tạo khi mở trang bằng Live Server. Mô hình đã có sẵn trong thư mục dự án. Nếu muốn chỉ dùng đồng hồ, bỏ chọn theo dõi khuôn mặt trên màn hình phiên học. AI là tín hiệu tham khảo, có thể nhầm khi ánh sáng yếu hoặc bạn đang đọc sách.</p>
+          </div>
+        </article>
+      </section>
+
+      <footer>
+        Một góc yên tĩnh. Một việc tại một thời điểm.
+        <span>Đèn Bàn · Focus Guard</span>
+      </footer>
+    </main>
+  </div>
+
+  <div class="alert-banner" id="alertBanner" role="alert" aria-atomic="true" hidden>
+    <span class="alert-symbol" aria-hidden="true">!</span>
+    <div class="alert-message">
+      <span class="alert-kicker">NHẮC TẬP TRUNG</span>
+      <strong>Quay lại bài học nhé!</strong>
+      <p id="alertBody"></p>
+    </div>
+    <button id="falseAlert" class="feedback-button" hidden>Mình đang học</button>
+    <button id="dismissAlert" aria-label="Đóng nhắc nhở">×</button>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <dialog id="confirmDialog">
+    <form method="dialog">
+      <span class="dialog-mark">✳</span>
+      <h2 id="dialogTitle"></h2>
+      <p id="dialogBody"></p>
+      <div class="dialog-actions">
+        <button class="button secondary" value="cancel">Quay lại</button>
+        <button class="button primary" value="confirm" id="dialogConfirm">Đồng ý</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+
+</html>

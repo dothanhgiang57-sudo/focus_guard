@@ -1,0 +1,6 @@
+const assert=require('node:assert/strict');require('../records.js');const R=globalThis.FocusRecords;
+const legacy=R.normalize({startedAt:'2026-10-02T01:00:00Z',elapsed:10000,focused:8000,distractions:2});assert.equal(legacy.hasDetails,false);assert.equal(legacy.longestStreak,null);
+const imported=R.normalize({id:'one',startedAt:'2026-10-03T01:00:00Z',durationMs:20000,focusedMs:10000,distractionCount:1,distractions:[{reasonLabel:'Quay đầu',durationMs:10000,at:'2026-10-03T01:00:10Z'}]});
+let list=R.upsert([legacy],imported);list=R.upsert(list,{...imported,elapsed:40000,focused:20000});assert.equal(list.length,2);
+const stats=R.summarize(list);assert.equal(stats.total,50000);assert.equal(stats.avg,65);assert.equal(stats.best,80);assert.equal(stats.reasons[0].count,1);assert.equal(stats.reasons[0].duration,10000);
+assert.equal(R.importRecords({sessions:list},list).length,2);assert.throws(()=>R.importRecords({sessions:[{...imported,focused:Infinity}]},list));assert.throws(()=>R.normalize({...imported,elapsed:-1}));assert.throws(()=>R.normalize({...imported,events:[{reason:'bad',duration:Infinity}]}));assert.equal(list.length,2,'Failed import leaves source unchanged');console.log('PASS: old records migration, original upload schema, upsert, stats and atomic validation.');

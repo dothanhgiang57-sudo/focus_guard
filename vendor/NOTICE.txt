@@ -1,0 +1,9 @@
+MediaPipe Tasks Vision 0.10.21, Google LLC, Apache License 2.0.
+Original JavaScript and WASM: https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.21/
+vision_bundle.worker.js adapts the final ESM export list of vision_bundle.mjs into self.vision for classic Web Worker compatibility; the implementation is otherwise unchanged.
+Model: https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task
+
+Object detection model: EfficientDet-Lite2 int8 v1 (Google MediaPipe), bundled for local inference.
+Source: https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite2/int8/1/efficientdet_lite2.tflite
+Documentation: https://ai.google.dev/edge/mediapipe/solutions/vision/object_detector
+SHA-256: b3f50554cb0ea559e90328845f7d9ba4d13c8bff372914d24e06bc8bb72fa896
